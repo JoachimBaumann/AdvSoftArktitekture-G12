@@ -13,10 +13,13 @@ on:
 
   # Environment Variables
 env:
-  PACKAGE_REGISTRY_TO_USE: nico8034
-  DOCKER_IMAGE_NAME: lowercase-image-name
-  PROJECT_NAME: ProjectName
-  GROUP_NUMBER: GroupNumber #I.e  Group02
+  SSH_USERNAME: nicol
+  DOCKER_IMAGE_API: dotnet_api
+  DOCKER_IMAGE_PUBLISHER: rust_publisher
+  DOCKER_IMAGE_SUBSCRIBER: node_subscriber
+  PROJECT_NAME: DemoProject
+  GROUP_NUMBER: 12 #I.e  Group02
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
 jobs:
   # Create artifact of repository source code to use for consistensy accross all jobs
@@ -92,7 +95,7 @@ jobs:
       - name: Test application
         run: echo "test"
 
-  build-push-docker-image:
+  build-push-api:
     runs-on: ubuntu-latest
     needs: [test-application]
     permissions:
@@ -118,15 +121,98 @@ jobs:
       - name: Build & Push image
         uses: docker/build-push-action@v3
         with:
-          context: . #Path to your dockerfile
+          context: ./src/api #Path to your dockerfile
           push: true
-          tags: ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_NAME }}:1.0-${{ github.sha }},ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          tags: ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_API }}:1.0-${{ github.sha }},ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_API }}:latest
+
+  build-push-publisher:
+    runs-on: ubuntu-latest
+    needs: [test-application]
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Download repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: repository-artifacts
+          path: .
+      - name: Login to GitHub Package Registry
+        uses: docker/login-action@v2
+        with:
+          # Authenticate with GitHub Container Registry, could be changed to use DockerHub
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Transform github.actor to lowercase
+      - name: Transform username to lowercase
+        run: echo "OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      # Building and pushing application image go to: GitHub -> Profile -> Packages 
+      - name: Build & Push image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./src/publisher #Path to your dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_PUBLISHER }}:1.0-${{ github.sha }},ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_PUBLISHER }}:latest
+  
+  build-push-subscriber:
+    runs-on: ubuntu-latest
+    needs: [test-application]
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Download repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: repository-artifacts
+          path: .
+      - name: Login to GitHub Package Registry
+        uses: docker/login-action@v2
+        with:
+          # Authenticate with GitHub Container Registry, could be changed to use DockerHub
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Transform github.actor to lowercase
+      - name: Transform username to lowercase
+        run: echo "OWNER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      # Building and pushing application image go to: GitHub -> Profile -> Packages 
+      - name: Build & Push image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./src/subscriber #Path to your dockerfile
+          push: true
+          tags: ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_SUBSCRIBER }}:1.0-${{ github.sha }},ghcr.io/${{ env.OWNER_LOWER }}/${{ env.DOCKER_IMAGE_SUBSCRIBER }}:latest
 
   # Job for deploying the application, could be the logic for deploying to your VM  
   deploy-application:
     runs-on: ubuntu-latest
-    needs: [build-push-docker-image]
+    needs: [build-push-api,build-push-publisher,build-push-subscriber]
     continue-on-error: true
     steps:
-      - name: Logic for deploying application
-        run: echo "deploy app"
+      - name: Download repository artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: repository-artifacts
+          path: .
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Transfer docker-compose to server
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem ./src/docker-compose.prod.yml ${{ env.SSH_USERNAME }}@${{ secrets.SERVER_IP }}:./
+      - name: Transfer mosquitto config to server
+        run: |
+          scp -o StrictHostKeyChecking=no -i private_key.pem ./src/mosquitto.conf ${{ env.SSH_USERNAME }}@${{ secrets.SERVER_IP }}:./
+        continue-on-error: true
+      - name: Run docker-compose Down on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "docker compose -f docker-compose.prod.yml down"
+      - name: Run docker-compose --build up on VM
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "docker compose -f docker-compose.prod.yml build --no-cache" &&
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.SSH_USERNAME }}@${{ secrets.SERVER_IP }} "docker compose -f docker-compose.prod.yml up -d"

@@ -20,7 +20,7 @@ on:
 
   # Environment Variables
 env:
-  DOCKER_IMAGE_NAME: lowercase-image-name
+  DOCKER_IMAGE_NAME: imagename
   PROJECT_NAME: ProjectName
   GROUP_NUMBER: GroupNumber #I.e  Group02 
 
