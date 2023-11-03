@@ -3,7 +3,7 @@ import random
 import time
 
 # MQTT broker settings
-broker_address = "mosquitto"  # Change this to your MQTT broker's address
+broker_address = "mosquitto-service"  # Change this to your MQTT broker's address
 port = 1883
 topic = "random_number"
 
