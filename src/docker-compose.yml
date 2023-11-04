@@ -7,9 +7,11 @@ services:
       context: ./publisher
       dockerfile: Dockerfile
     depends_on:
-      - mosquitto
+      - mosquitto-service
+    environment:
+      - PYTHONUNBUFFERED=1
     
-  mosquitto:
+  mosquitto-service:
     image: eclipse-mosquitto:latest
     ports:
       - "1883:1883"
@@ -23,7 +25,7 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - postgres
-      - mosquitto
+      - mosquitto-service
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/mydatabase
       DB_USER: postgres
