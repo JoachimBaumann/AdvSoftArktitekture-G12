@@ -10,8 +10,5 @@ COPY ./src /app
 # Install any needed packages specified in requirements.txt
 RUN pip install paho-mqtt
 
-# Make port 1883 available to the world outside this container
-EXPOSE 1883
-
 # Run script.py when the container launches
 CMD ["python", "main2.py"]
