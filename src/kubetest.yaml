@@ -29,9 +29,6 @@ metadata:
   name: mq-pv-claim
   labels:
     app: mosquitto
-  name: mq-pv-claim
-  labels:
-    app: mosquitto
 spec:
   accessModes:
     - ReadWriteOnce
