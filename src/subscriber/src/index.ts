@@ -19,12 +19,12 @@ const start = async () => {
         const connection = await AppDataSource.initialize()
         console.log('Connected to the database.');
 
-        const mqttClient = mqtt.connect('mqtt://mosquitto:1883', {
+        const mqttClient = mqtt.connect('mqtt://mosquitto-service:1883', {
             clientId: 'ts-subscriber'
         });
 
         mqttClient.on('connect', () => {
-            mqttClient.subscribe('data/random-numbers', (err) => {
+            mqttClient.subscribe('random_number', (err) => {
                 if (err) throw err;
             });
         });
