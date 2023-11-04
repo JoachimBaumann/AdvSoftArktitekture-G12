@@ -1,4 +1,5 @@
 import paho.mqtt.client as mqtt
+import sys
 import random
 import time
 
@@ -23,6 +24,8 @@ try:
 
         # Print the published number for reference
         print(f"Published: {random_number}")
+
+        sys.stdout.write(f"Published: {random_number}")
 
         # Wait for one second before publishing the next number
         time.sleep(1)

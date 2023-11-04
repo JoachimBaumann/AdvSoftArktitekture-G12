@@ -1,23 +1,78 @@
 apiVersion: v1
-kind: Namespace
+kind: Service
 metadata:
-  name: architecturetest
+  name: mosquitto-service
+spec:
+  clusterIP: None
+  selector:
+    app: mosquitto
+  ports:
+    - name: mqtt
+      protocol: TCP
+      port: 1883
+      targetPort: 1883
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: mosquitto-config
+data:
+  mosquitto.conf: |
+    listener 1883
+    allow_anonymous true
+    log_type all
 
 ---
-
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: postgres-data
+  name: mq-pv-claim
+  labels:
+    app: mosquitto
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
 
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  labels:
+    app: mosquitto
+spec:
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - image: eclipse-mosquitto:latest
+          name: mosquitto
+          ports:
+            - containerPort: 1883
+              name: mosquitto
+          volumeMounts:
+            - name: mosquitto-persistent-storage
+              mountPath: /mosquitto/data
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+      volumes:
+        - name: mosquitto-persistent-storage
+          persistentVolumeClaim:
+            claimName: mq-pv-claim
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,11 +88,9 @@ spec:
         app: publisher
     spec:
       containers:
-      - name: publisher
-        image: wastee941/softarchtest:publisher
-
+        - name: publisher
+          image: wastee941/softarchtest:publisher
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -53,145 +106,51 @@ spec:
         app: subscriber
     spec:
       containers:
-      - name: subscriber
-        image: wastee941/softarchtest:subscriber
-        ports:
-        - containerPort: 80
-        env:
-        - name: DATABASE_URL
-          value: postgresql://postgres:password@postgres:5432/mydatabase
-        - name: DB_USER
-          value: postgres
-        - name: DB_HOST
-          value: postgres-service
-        - name: DB_NAME
-          value: mydatabase
-        - name: DB_PASSWORD
-        - name: DB_PORT
-          value: "5432"
-
+        - name: subscriber
+          image: wastee941/softarchtest:subscriber
+          ports:
+            - containerPort: 80
+          env:
+            - name: DATABASE_URL
+              value: postgresql://postgres:password@postgres:5432/mydatabase
+            - name: DB_USER
+              value: postgres
+            - name: DB_HOST
+              value: postgres-service
+            - name: DB_NAME
+              value: mydatabase
+            - name: DB_PASSWORD
+              value: password
+            - name: DB_PORT
+              value: "5432"
+            - name: PYTHONUNBUFFERED
+              value: "1"
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-deployment
+  name: postgres-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: postgres
   template:
     metadata:
       labels:
-        app: api
+        app: postgres
     spec:
       containers:
-      - name: api
-        image: wastee941/softarchtest:api
-        ports:
-        - containerPort: 80
-        env:
-        - name: ASPNETCORE_URLS
-          value: http://+:80
-
+        - name: postgres
+          image: postgres:latest
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: password
+            - name: POSTGRES_DB
+              value: mydatabase
 ---
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mosquitto-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mosquitto
-  template:
-    metadata:
-      labels:
-        app: mosquitto
-    spec:
-      containers:
-      - name: mosquitto
-        image: eclipse-mosquitto:latest
-        ports:
-        - containerPort: 1883
-          name: mqtt
-        - containerPort: 9001
-          name: mqtt-websockets
-        volumeMounts:
-        - name: config-volume
-          mountPath: /mosquitto/config
-      volumes:
-      - name: config-volume
-        configMap:
-          name: mosquitto-config
-
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: publisher-service
-spec:
-  selector:
-    app: publisher
-  ports:
-  - name: mqtt
-    port: 1883
-    targetPort: 1883
-  - name: mqtt-websockets
-    port: 9001
-    targetPort: 9001
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: subscriber-service
-spec:
-  selector:
-    app: subscriber
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-service
-spec:
-  selector:
-    app: api
-  ports:
-  - name: http
-    port: 80
-    targetPort: 80
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: mosquitto-service
-spec:
-  selector:
-    app: mosquitto
-  ports:
-  - name: mqtt
-    port: 1883
-    targetPort: 1883
-  - name: mqtt-websockets
-    port: 9001
-    targetPort: 9001
-
----
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -200,6 +159,5 @@ spec:
   selector:
     app: postgres
   ports:
-  - name: postgres
-    port: 5432
-    targetPort: 5432
+    - name: postgres
+      port: 5432
