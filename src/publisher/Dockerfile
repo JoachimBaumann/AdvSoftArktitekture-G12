@@ -8,7 +8,9 @@ WORKDIR /app
 COPY ./src /app
 
 # Install any needed packages specified in requirements.txt
+RUN apt-get update && apt-get install -y dumb-init
 RUN pip install paho-mqtt
 
 # Run script.py when the container launches
+ENTRYPOINT ["dumb-init", "--"]
 CMD ["python", "main2.py"]

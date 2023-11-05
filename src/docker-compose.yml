@@ -3,14 +3,13 @@ version: '3'
 services:
 
   publisher:
-    build:
-      context: ./publisher
-      dockerfile: Dockerfile
+    image: wastee941/softarchtest:publisher
     depends_on:
       - mosquitto-service
     environment:
       - PYTHONUNBUFFERED=1
-    
+    restart: always
+        
   mosquitto-service:
     image: eclipse-mosquitto:latest
     ports:
@@ -20,9 +19,8 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   subscriber:
-    build:
-      context: ./subscriber
-      dockerfile: Dockerfile
+    restart: always
+    image: wastee941/softarchtest:subscriber
     depends_on:
       - postgres
       - mosquitto-service
@@ -35,6 +33,7 @@ services:
       DB_PORT: "5432"
 
   postgres:
+    restart: always
     image: postgres:latest
     environment:
       POSTGRES_DB: mydatabase
@@ -49,6 +48,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
+    restart: always
     ports:
       - "80:80"
     environment:
