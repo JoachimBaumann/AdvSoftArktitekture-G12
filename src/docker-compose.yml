@@ -1,61 +1,66 @@
-version: '3'
-
+version: '2'
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+
+  mosquitto-service:
+    image: confluentinc/cp-kafka-mqtt:latest
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_MQTT_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      KAFKA_MQTT_CONFLUENT_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_MQTT_TOPIC_REGEX_LIST: random_number:.*random_number
 
   publisher:
-    image: wastee941/softarchtest:publisher
+    build:
+      context: publisher
+      dockerfile: Dockerfile
     depends_on:
       - mosquitto-service
     environment:
       - PYTHONUNBUFFERED=1
-    restart: always
-        
-  mosquitto-service:
-    image: eclipse-mosquitto:latest
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
 
   subscriber:
     restart: always
-    image: wastee941/softarchtest:subscriber
-    depends_on:
-      - postgres
-      - mosquitto-service
+    build:
+      context: subscriber
+      dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/mydatabase
       DB_USER: postgres
       DB_HOST: postgres
-      DB_NAME: mydatabase
+      DB_NAME: Sensor
       DB_PASSWORD: password
       DB_PORT: "5432"
 
   postgres:
-    restart: always
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: mydatabase
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+    image: postgres:14-alpine
     ports:
-      - "5432:5432"
+      - 5432:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-  
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "80:80"
+      - ~/apps/postgres:/var/lib/postgresql/data
     environment:
-      - ASPNETCORE_URLS=http://+:80
-    depends_on:
-      - postgres
-
-      
-volumes:
-  postgres_data:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=Sensor

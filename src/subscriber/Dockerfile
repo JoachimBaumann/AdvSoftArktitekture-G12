@@ -1,14 +1,4 @@
-FROM node:16
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install
-RUN npm install -g typescript
-
-COPY . .
-
-RUN tsc
-
-CMD ["node", "dist/index.js"]
+FROM eclipse-temurin:17-jdk-alpine
+VOLUME /tmp
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
