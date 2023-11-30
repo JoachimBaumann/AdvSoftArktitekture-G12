@@ -38,8 +38,12 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mosquitto-service
+      - postgres
     environment:
       - PYTHONUNBUFFERED=1
+    deploy:
+      mode: replicated
+      replicas: 20
 
   subscriber:
     restart: always
@@ -53,7 +57,8 @@ services:
       DB_NAME: Sensor
       DB_PASSWORD: password
       DB_PORT: "5432"
-
+    ports:
+      - "8080:8080"
   postgres:
     image: postgres:14-alpine
     ports:

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.kafka.common.protocol.types.Field;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
 
@@ -25,6 +26,18 @@ public class Sensor {
 
     @Column(name = "timestamp")
     private String timestamp;
+
+    @CreationTimestamp
+    @Column(name = "created_At")
+    private Timestamp created_At;
+
+    public Timestamp getCreated_At() {
+        return created_At;
+    }
+
+    public void setCreated_At(Timestamp created_At) {
+        this.created_At = created_At;
+    }
 
     public Sensor(String sensorID, String sensorData, String timestamp) {
         this.sensorID = sensorID;
