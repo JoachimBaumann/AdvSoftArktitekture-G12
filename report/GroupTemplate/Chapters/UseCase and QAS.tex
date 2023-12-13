@@ -1,0 +1,210 @@
+\section{Use Case and Quality Attribute Scenario}
+\label{sec:use_case_and_qas}
+\noindent
+This Section introduces the use case and the specified four QASes.
+The QASes are developed based on the use case.
+\\ \\
+To facilitate an analysis of the needs of the ball pen manufacturer that is facing potential growth in their production, a use case analysis of the required system has been performed. The assumptions for creating the use cases are seen in table \ref{tab:Assumptions Table}.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{ID} & \textbf{Assumption} & \textbf{Reasoning} \\
+\hline
+A1 & The pen consists of 5 parts & The disassembled pen shows this to be the case \\
+\hline
+A2 & 4 assembly steps are conducted by 4 individual cells & Minimum number of steps required to assemble the 5 parts of the pen. \\
+\hline
+A3 & Each cell contains sensors to monitor its own health and progress in its process. &  Sensor and monitor data need to be collected in order to operate the system. \\
+\hline
+A4 & Each cell has a box of parts that is fed into the assembly line to combine with the pen & The different cells need access to their respective parts. \\
+\hline
+A5 & Each cell monitors execution time, availability, performance, quality, and OEE & Data is needed to run diagnostics and perform optimization of the process. \\
+\hline
+A6 & Different cells may require software written in different languages. & For optimization and diagnostics. \\
+\hline
+A7 & The assembly line has to run without operator interaction (fully automated) & To reduce production times and labor costs. \\
+\hline
+A8 & A database should be used. & To store relevant data for logs. \\
+\hline
+A9 & The assembly line contains both parallel and sequential operations. & Some parts can be combined simultaneously, while the last part is dependent on two other cells. \\
+\hline
+A10 & The system uses pre-made parts therefore only assembly of the ball-pen is required. & The parts of the pen to be assembled are already made in a different area of production. \\
+\hline
+A11 & Quality control happens at each cell. & The sensors at the cells are able to conduct sufficient quality control. \\
+\hline
+\end{tabular}
+\caption{Table of Assumptions and Reasoning}
+\label{tab:Assumptions Table}
+\end{table}
+
+These assumptions were the basis for the use cases that are shown as in the following subsection \ref{sec:use_case}.
+
+\subsection{Use case}
+\label{sec:use_case}
+
+Table \ref{tab:use-case-start-production} describes the process of starting the production system. The primary actor is the production manager who is responsible for initiating the process. The precondition of this is that he is logged into the software and that all the necessary materials, machine setups, and preliminary checks are ready. The main flow describes the production manager starting the production system and the subsequent steps this entails. The postcondition is that the system is operational. An alternative flow describes when the system diagnoses an issue.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{6cm}|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Use Case: Start Production}} \\
+\hline
+\textbf{ID:} & U01 \\
+\hline
+\textbf{Primary Actor:} & Production manager \\
+\hline
+\textbf{Secondary Actor:} &  None \\
+\hline
+\textbf{Short Description:} & This process is responsible for the start of the production and the workflow connected to it. \\
+\hline
+\textbf{Preconditions:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+  \item The production manager, responsible for initiating production cycles, is logged into the software.
+  \item All necessary materials, machine setups, and preliminary checks for production cells have been completed and are ready for operation.
+\end{itemize}
+\end{minipage} \\
+\hline
+\textbf{Main Flow:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{enumerate}
+  \item The production manager initiates the production via the central control software by clicking “start production”
+  \item The production orchestrator conducts a status check for all cells, confirming the readiness for production.
+  \item Upon successful status confirmation, each cell sends a ready signal back to the orchestrator.
+  \item The control software notifies the production manager that the production has started.
+  \item The user interface switches to display the production real-time status information screen.
+\end{enumerate}
+\end{minipage} \\
+\hline
+\textbf{Post conditions:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+    \item All production cells are operational, and the production manager is monitoring the system through a user interface.
+\end{itemize}
+\end{minipage}
+\\
+\hline
+\textbf{Alternative Flow:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+  \item If the cells respond with a bad diagnostic, the production manager is notified, and the production start is canceled.
+\end{itemize}
+\end{minipage} \\
+\hline
+\end{tabular}
+\caption{Use Case Specification for Starting Production}
+\label{tab:use-case-start-production}
+\end{table}
+
+Table \ref{tab:use-case-error-diagnosis} is the use case for the process that happens to facilitate the error diagnostics of the system. The primary actor for this is again the production manager. The preconditions describe the conditions for the error diagnosis to take place. The main flow describes the steps the production manager must take to achieve this. The post-conditions indicate that the result of this is that an alarm has been activated, signaling the error. The alternative describes the case where the cells respond with a bad diagnosis, and the system can't handle it automatically.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{6cm}|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Use Case: Error diagnosis}} \\
+\hline
+\textbf{ID:} & U02 \\
+\hline
+\textbf{Primary Actor:} & Production manager \\
+\hline
+\textbf{Secondary Actor:} &  None \\
+\hline
+\textbf{Short Description:} & This use case describes what happens to the system when an error has occurred. The production manager is logged into the system. \\
+\hline
+\textbf{Preconditions:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+  \item The production manager is logged into the centralized control system.
+  \item An error has been detected in the production line, halting the production process.
+\end{itemize}
+\end{minipage} \\
+\hline
+\textbf{Main Flow:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{enumerate}
+  \item The production manager clicks “Error diagnosis”
+  \item The production orchestrator checks status for each cell in the production.
+  \item Each cell sends diagnostic information in return.
+  \item The diagnostic data is displayed at UI.
+  \item An alarm or notification begins.
+\end{enumerate}
+\end{minipage} \\
+\hline
+\textbf{Post conditions:} & An alarm has occurred. \\
+\hline
+\textbf{Alternative Flow:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+  \item If any of the cells respond with a bad diagnostic, the production manager is notified.
+  \item The system triggers a diagnostic routine in order to identify the issue.
+  \item If the issue cannot be handled automatically, the production is stopped until manual intervention is initiated.
+\end{itemize}
+\end{minipage} \\
+\hline
+\end{tabular}
+\caption{Use Case Specification for Error Diagnosis}
+\label{tab:use-case-error-diagnosis}
+\end{table} 
+
+Table \ref{tab:use-case-stop-production} outlines the criteria for halting production and explains the subsequent actions that occur once the production manager has initiated the "stop production" command in the orchestration software's user interface, which controls the system.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|p{6cm}|}
+\hline
+\multicolumn{2}{|c|}{\textbf{Use Case: Stop Production}} \\
+\hline
+\textbf{ID:} & U01 \\
+\hline
+\textbf{Primary Actor:} & Production manager \\
+\hline
+\textbf{Secondary Actor:} & None \\
+\hline
+\textbf{Short Description:} & This process is responsible for stopping the production and the workflow connected to it. \\
+\hline
+\textbf{Preconditions:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}
+  \item The product manager is logged into the software.
+  \item The production is running.
+\end{itemize}
+\end{minipage} \\
+\hline
+\textbf{Main Flow:} & 
+\begin{minipage}[t]{\linewidth}
+\begin{enumerate}
+  \item The production manager clicks “Stop Production” from the orchestration software user interface.
+  \item The production orchestrator sends a stop production message to each cell.
+  \item The software notifies the production manager that the production has been stopped.
+\end{enumerate}
+\end{minipage} \\
+\hline
+\textbf{Post conditions:} & The production has stopped and the production manager has confirmed the pause in operations. \\
+\hline
+\textbf{Alternative Flow:} & Not applicable \\
+\hline
+\end{tabular}
+\caption{Use Case Specification for Stopping Production}
+\label{tab:use-case-stop-production}
+\end{table}
+
+\subsection{Quality attribute scenarios}
+\label{sec:qas}
+Based on the use cases, four quality attributes (QA) are identified to achieve the system.
+\begin{enumerate}
+    \item Interoperability
+    \item Availability
+    \item Deployability
+    \item Scalability
+\end{enumerate} 
+\textit{Interoperability} is important, as the multiple systems for production have to work together. The use cases show that the system contains various software and hardware components that need to work in unison. Interoperability ensures that this can happen. Data flow is also important, as seen in table \ref{tab:use-case-start-production} where the organizational system requires diagnostics of the cells, ensuring that they are operational to show the production manager that everything is operational in the user interface. The same is the case for \ref{tab:use-case-error-diagnosis} where error diagnostics of the cells require interoperability between the different systems to identify the issue. Interoperability is also part of ensuring scalability, as it allows for the integration of new technologies without interrupting the entire workflow. \\ \\
+\textit{Availability} is important for a system such as this, as any downtime directly translates into lost productivity. It is also important as seen in the process flows in the table, where the production manager has to make informed decisions based on the feedback from the user interface in real-time. If any parts of the system are unavailable, this might be impossible. It is also directly tied to maintenance and upkeep, as these are also based on system feedback as seen in table \ref{tab:use-case-error-diagnosis}. If this is not available, this can have consequences for the equipment or the safety of the workers. \\
+
+\textit{Deployability} allows the system to be easy to set up quickly and configure with minimal effort. Depending on the system, different deployability orchestrators may have an advantage over others. Deployability also denotes the system's recovery speed, ensuring that in case an issue is identified the system will quickly be able to recover, minimizing downtime. This is also a requirement for the system to gain maintenance, as the production demand grows the system can be scaled to accommodate the increased load. \\
+
+
+\textit{Scalability} is important since the ball pen manufacturer is facing potential growth. A system with scalability will allow the manufacturer to scale up without any downtime in production. The system will also be able to handle the potential increase in error checks that have to be performed.

@@ -1,0 +1,6 @@
+\section{Future work}
+
+With the current prototype setup, the only load on Kafka is through the sensors, mocked with the producer service. To reach a state where it can be confidently concluded that the software architecture is viable to support the production of the I4.0 standard, further parts of the system would have to be mocked. By mocking more systems it would be easier to tell if Kafka could maintain a low ms on the data transmissions while supporting a complete production architecture.
+Other quality attributes than scalability should also be tested, more specifically the availability and deployability attributes.
+With the current prototype, the system is handled within docker-compose, which has sole responsibility for the deployability. It could be very interesting to compare the capabilities of docker-compose and an alternative like Kubernetes.
+While testing the scalability of Kafka, the system had an increasingly higher load each time it was booted up. To test the availability it would be a good idea to do live load testing and stress testing, where the system gets gradual increases or even major spikes in data traffic to see the response. 
